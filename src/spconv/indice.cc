@@ -214,12 +214,12 @@ Index getIndicePairsSubM(tv::TensorView<const Index> indicesIn,
 #pragma unroll
   for (int i = 0; i < NDim; ++i) {
     spatialVolume *= outSpatialShape[i];
-  }
+  }  // output length w*h*l
   Index kernelVolume = 1;
 #pragma unroll
   for (int i = 0; i < NDim; ++i) {
     kernelVolume *= kernelSize[i];
-  }
+  }  // kernel length w*h*l
   Index numValidPoints = 0;
   // Index validPoints[kernelVolume * (NDim + 1)];
   std::vector<Index> validPoints_(kernelVolume * (NDim + 1));
