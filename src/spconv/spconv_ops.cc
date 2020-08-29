@@ -31,7 +31,7 @@ _useHash
   auto NDim = kernelSize.size();
   // CPU always use hash (tsl::robin_map). 哈希表用tsl更快
   bool useHash = _useHash != 0 || indices.device().type() == torch::kCPU;
-  auto numAct = indices.size(0);  // 这个维度表示啥啊...
+  auto numAct = indices.size(0);  // 这个维度表示点数
   auto coorDim = indices.size(1) - 1; // batchIdx + xyz
   TV_ASSERT_RT_ERR(NDim == coorDim, "error"); // tensorview里面的报错宏报错
   TV_ASSERT_RT_ERR(kernelSize.size() == coorDim, "error");
