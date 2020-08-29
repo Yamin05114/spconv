@@ -11,17 +11,17 @@ getIndicePairs(torch::Tensor indices, int64_t batchSize,
                std::vector<int64_t> outPadding, int64_t _subM,
                int64_t _transpose, int64_t _useHash) 
 /**
-indices(Tensor):
-batchSize(int64_t): 
+indices(tensor): shape(point_num, 4)  4 for batch whl
+batchSize(int64_t): ~ 
 outSpatialShape(vector): 2D LW  3D HLW
 spatialShape(vector): 2D LW  3D HLW
 kernelSize(vector): 2D lw eg:(3,3)  3D hlw eg:(3,3,3)
 stride(vector): sparseconv需要，2d（2,2）  3d（2,2,2） subm不需要因为不能downsample用 为啥还不知道。
-padding
-dilation
-outPadding
-_subM_transpose, 
-_useHash
+padding:~
+dilation:~
+outPadding:~
+_subM_transpose:~ 
+_useHash:~
 */
   
 {
