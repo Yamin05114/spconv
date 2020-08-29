@@ -1,6 +1,7 @@
 #include <spconv/spconv_ops.h>
 namespace spconv {
 
+// 输入参数都是int64向量
 std::vector<torch::Tensor>
 getIndicePairs(torch::Tensor indices, int64_t batchSize,
                std::vector<int64_t> outSpatialShape,
@@ -9,46 +10,49 @@ getIndicePairs(torch::Tensor indices, int64_t batchSize,
                std::vector<int64_t> padding, std::vector<int64_t> dilation,
                std::vector<int64_t> outPadding, int64_t _subM,
                int64_t _transpose, int64_t _useHash) {
-  // auto timer = spconv::CudaContextTimer<>();
-  bool subM = _subM != 0;
+  // auto timer = spconv::CudaContextTimer<>();  
+  bool subM = _subM != 0;  // subM主要是为了标记第一层
   bool transpose = _transpose != 0;
   auto NDim = kernelSize.size();
-  // CPU always use hash (tsl::robin_map).
+  // CPU always use hash (tsl::robin_map). 哈希表用tsl更快
   bool useHash = _useHash != 0 || indices.device().type() == torch::kCPU;
-  auto numAct = indices.size(0);
+  auto numAct = indices.size(0);  // 这个维度表示啥啊...
   auto coorDim = indices.size(1) - 1; // batchIdx + xyz
-  TV_ASSERT_RT_ERR(NDim == coorDim, "error");
+  TV_ASSERT_RT_ERR(NDim == coorDim, "error"); // tensorview里面的报错宏报错
   TV_ASSERT_RT_ERR(kernelSize.size() == coorDim, "error");
   TV_ASSERT_RT_ERR(outSpatialShape.size() == coorDim, "error");
   TV_ASSERT_RT_ERR(stride.size() == coorDim, "error");
   TV_ASSERT_RT_ERR(padding.size() == coorDim, "error");
   TV_ASSERT_RT_ERR(outPadding.size() == coorDim, "error");
   TV_ASSERT_RT_ERR(dilation.size() == coorDim, "error");
-  auto kernelVolume = kernelSize[0];
+  auto kernelVolume = kernelSize[0]; 
   for (int i = 1; i < kernelSize.size(); ++i) {
-    kernelVolume *= kernelSize[i];
+    kernelVolume *= kernelSize[i]; // kernelVolume是kernel各维度连乘，向量化长度
   }
   TV_ASSERT_RT_ERR(kernelVolume <= 4096, "error");
   auto outputVolume = outSpatialShape[0];
   for (int i = 1; i < outSpatialShape.size(); ++i) {
-    outputVolume *= outSpatialShape[i];
+    outputVolume *= outSpatialShape[i]; // outVolume是shape向量化后的长度
   }
   std::string msg = "due to limits of cuda hash, the volume of dense space "
                     "include batch size ";
   msg += "must less than std::numeric_limits<int>::max() = 2e9";
   TV_ASSERT_RT_ERR(batchSize * outputVolume < std::numeric_limits<int>::max(),
-                   msg);
+                   msg);  // 最大长度要能int32
   torch::Tensor indicePairs =
       torch::full({2, kernelVolume, numAct}, -1,
                   torch::dtype(torch::kInt32).device(indices.device()));
-  torch::Tensor indiceNum = torch::zeros(
+  torch::Tensor indiceNum = torch::zeros(  // indiceNum长度为kernelVolume，卷积核大小
       {kernelVolume}, torch::dtype(torch::kInt32).device(indices.device()));
-  auto gridSize = batchSize * outputVolume;
+  auto gridSize = batchSize * outputVolume;  // batch h l w，表示空间元素个数
   if (useHash) {
-    gridSize = batchSize;
+    gridSize = batchSize;  // 需要哈希表就不必纠结输出大小，完全稀疏
   }
+  
+  // ！！！消耗内存的在这里，直接是gridSize大小的gridOut
   torch::Tensor gridOut = torch::full(
       {gridSize}, -1, torch::dtype(torch::kInt32).device(indices.device()));
+      //  gridOut就是 （batch，w,h,l)形状的tensor全部填-1
   gridOut = gridOut.view({batchSize, -1});
   int64_t numActOut = -1;
   for (int i = 0; i < NDim; ++i) {
