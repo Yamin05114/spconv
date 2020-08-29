@@ -9,7 +9,22 @@ getIndicePairs(torch::Tensor indices, int64_t batchSize,
                std::vector<int64_t> kernelSize, std::vector<int64_t> stride,
                std::vector<int64_t> padding, std::vector<int64_t> dilation,
                std::vector<int64_t> outPadding, int64_t _subM,
-               int64_t _transpose, int64_t _useHash) {
+               int64_t _transpose, int64_t _useHash) 
+/**
+indices(Tensor):
+batchSize(int64_t): 
+outSpatialShape(vector): 2D LW  3D HLW
+spatialShape(vector): 2D LW  3D HLW
+kernelSize(vector): 2D lw eg:(3,3)  3D hlw eg:(3,3,3)
+stride(vector): sparseconv需要，2d（2,2）  3d（2,2,2） subm不需要因为不能downsample用 为啥还不知道。
+padding
+dilation
+outPadding
+_subM_transpose, 
+_useHash
+*/
+  
+{
   // auto timer = spconv::CudaContextTimer<>();  
   bool subM = _subM != 0;  // subM主要是为了标记第一层
   bool transpose = _transpose != 0;
@@ -27,7 +42,7 @@ getIndicePairs(torch::Tensor indices, int64_t batchSize,
   TV_ASSERT_RT_ERR(dilation.size() == coorDim, "error");
   auto kernelVolume = kernelSize[0]; 
   for (int i = 1; i < kernelSize.size(); ++i) {
-    kernelVolume *= kernelSize[i]; // kernelVolume是kernel各维度连乘，向量化长度
+    kernelVolume *= kernelSize[i]; // kernelVolume是kernel各维度连乘,空间尺寸
   }
   TV_ASSERT_RT_ERR(kernelVolume <= 4096, "error");
   auto outputVolume = outSpatialShape[0];
@@ -55,6 +70,7 @@ getIndicePairs(torch::Tensor indices, int64_t batchSize,
       //  gridOut就是 （batch，w,h,l)形状的tensor全部填-1
   gridOut = gridOut.view({batchSize, -1});
   int64_t numActOut = -1;
+  // 各个方向padding个数
   for (int i = 0; i < NDim; ++i) {
     if (subM) {
       padding[i] = kernelSize[i] / 2;
