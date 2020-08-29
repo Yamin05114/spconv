@@ -300,7 +300,19 @@ int create_submconv_indice_pair_cpu(
     torch::Tensor indiceNum, std::vector<int64_t> kernelSize,
     std::vector<int64_t> stride, std::vector<int64_t> padding,
     std::vector<int64_t> dilation, std::vector<int64_t> outSpatialShape,
-    bool transpose, bool resetGrid, bool useHash) {
+    bool transpose, bool resetGrid, bool useHash) 
+/**
+  indicesIn(tensor): shape(voxel_num, 4)  4 for batch whl
+  gridsOut(tensor): shape(batch, h*l*w) dense indice
+  indicePairs(tensor): shape(2, kernel_volume卷积核大小，voxel_num), why 2?
+  indiceNum(tensor): shape(,kernel_volume), 
+  kernel_size(vector): 2D lw eg:(3,3)  3D hlw eg:(3,3,3)
+  stride(vector): sparseconv需要，2d（2,2）  3d（2,2,2） subm不需要因为不能downsample用 为啥还不知道。
+  padding:~
+  dilation:~
+  outSpatialShape(vector): outSpatialShape(vector): 2D LW  3D HLW
+*/
+{
   auto ndim = outSpatialShape.size();
   auto numActIn = indicesIn.size(0);
   int batchSize = gridsOut.size(0);
