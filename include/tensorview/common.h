@@ -25,7 +25,7 @@
 #include <boost/stacktrace.hpp>
 #endif
 
-namespace tv {
+namespace tv { // tensorview张量视图的命名空间
 
 template <class SStream, class T> void sstream_print(SStream &ss, T val) {
   ss << val;
@@ -68,6 +68,7 @@ template <class... TArgs> void ssprint(TArgs... args) {
     throw std::invalid_argument(__macro_s.str());                              \
   }
 
+// assert macro 报错宏
 #define TV_ASSERT_RT_ERR(expr, ...)                                            \
   {                                                                            \
     if (!(expr)) {                                                             \
